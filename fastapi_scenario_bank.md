@@ -1,5 +1,15 @@
-# Scenario Bank
+## Scenario Bank
 
-Used (do not reuse): Secure Payment Gateway, API Router with Pre-Execution Hooks (Middleware), Food Court, Movie Theater, Gym, Online Checkout, Concert Venue, Hospital, Airport, Bank Account, Gym Turnstile, Operating Room, Restaurant Kitchen, Security System, Smart Home, Command Center, Mission Control, Space Station, Nuclear Plant, Vending Machine, City Directory, Blog API, Audit Logger, Crash-Proof API, Train Station, Data Center, Embassy, Stock Exchange, Customs Office, Hotel, University, Courthouse, Pharmacy, Police Station, Fire Station, Museum, Casino, Shipping Port, Power Grid.
+**Used (do not reuse):**
+Gym, Online Checkout, Concert Venue, Hospital, Airport, Bank Account,
+Gym Turnstile, Operating Room, Restaurant Kitchen, Security System,
+Smart Home, Command Center, Mission Control, Space Station, Nuclear Plant,
+Vending Machine, City Directory, Blog API, Audit Logger, Crash-Proof API
 
-Available: Library, Immigration Checkpoint, Aquarium, Seaport, City Hall, Unemployment Office, Blood Bank, Veterinary Clinic, Broadcast Studio, Satellite Control Room, Weather Station, Airport Control Tower, Submarine, Telescope Array.
+**Available:**
+Hotel, University, Courthouse, Shipping Port, Train Station, Pharmacy,
+Stock Exchange, Power Grid, Police Station, Embassy, Library,
+Immigration Checkpoint, Data Center, Fire Station, Museum, Casino,
+Aquarium, Seaport, City Hall, Unemployment Office, Customs Office,
+Blood Bank, Veterinary Clinic, Broadcast Studio, Satellite Control Room,
+Weather Station, Airport Control Tower, Submarine, Telescope Array
