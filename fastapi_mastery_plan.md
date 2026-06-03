@@ -220,7 +220,7 @@ Project 1:         Ready to start — begin now
 
 **Used (do not reuse):**
 Secure Payment Gateway, API Router with Pre-Execution Hooks (Middleware),
-Food Court (drill 44, unnamed in file), Movie Theater, Gym, Online Checkout,
+Food Court, Movie Theater, Gym, Online Checkout,
 Concert Venue, Hospital, Airport, Bank Account, Gym Turnstile, Operating Room,
 Restaurant Kitchen, Security System, Smart Home, Command Center, Mission Control,
 Space Station, Nuclear Plant, Vending Machine, City Directory, Blog API,
@@ -235,8 +235,8 @@ Satellite Control Room, Weather Station, Airport Control Tower, Submarine,
 Telescope Array
 
 **Duplicates (fix):**
-- Courthouse — drills 73 and 74
-- Stock Exchange — drills 69 and 76
+- Courthouse — drills 73 and 74 (rename one drill to an unused scenario)
+- Stock Exchange — drills 69 and 76 (rename one drill to an unused scenario)
 
 ---
 

@@ -2,7 +2,7 @@ import asyncio  # noqa: F401
 from typing import Callable  # noqa: F401
 
 # =========================================================================
-# SCENARIO:
+# SCENARIO: The Food Court
 # A food court has multiple stalls. Each stall is registered with a name
 # and a "preparer" function that takes a raw order string and returns a
 # prepared meal string.
