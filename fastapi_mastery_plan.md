@@ -15,11 +15,12 @@ Project 2: Not started
 ## Pointers (read only when needed)
 
 <<<<<<< HEAD
+
 - Drill Contract: fastapi_drill_contract.md
 - Roadmap + Drill Map: fastapi_roadmap.md
 - Scenario Bank: fastapi_scenario_bank.md
-- Concept Notes: fastapi_concept_notes.md
-=======
+- # Concept Notes: fastapi_concept_notes.md
+
 ## Revised Roadmap (Job-Focused)
 
 | Phase              | What                                                        | When                    |
@@ -37,21 +38,21 @@ Project 2: Not started
 
 ## Drill Map
 
-| Range   | Topic                                       | Status         |
-| ------- | ------------------------------------------- | -------------- |
-| 01–10   | Pydantic fundamentals                       | ✅             |
-| 11–20   | Async/Await fundamentals                    | ✅             |
-| 21–30   | Wrapper decorators                          | ✅             |
-| 31–40   | Registry decorators                         | ✅             |
-| 41–50   | Toy dispatch + toy middleware + toy DI      | ✅             |
-| 51–60   | OOP decorators                              | ✅             |
-| 61–70   | Dynamic dispatch deep dive                  | ✅             |
-| 71–80   | First mixes (2 concepts)                    | ✅             |
-| 81–100  | Harder combos — gap filling after Project 1 | ⬜             |
-| 101–130 | Real FastAPI (core + auth + DB)             | ⬜             |
-| 131–160 | Production hardening (testing + infra)      | ⬜             |
-| 161–199 | Speed drills + synthesis                    | ⬜             |
-| 200     | Final boss                                  | ⬜             |
+| Range   | Topic                                       | Status |
+| ------- | ------------------------------------------- | ------ |
+| 01–10   | Pydantic fundamentals                       | ✅     |
+| 11–20   | Async/Await fundamentals                    | ✅     |
+| 21–30   | Wrapper decorators                          | ✅     |
+| 31–40   | Registry decorators                         | ✅     |
+| 41–50   | Toy dispatch + toy middleware + toy DI      | ✅     |
+| 51–60   | OOP decorators                              | ✅     |
+| 61–70   | Dynamic dispatch deep dive                  | ✅     |
+| 71–80   | First mixes (2 concepts)                    | ✅     |
+| 81–100  | Harder combos — gap filling after Project 1 | ⬜     |
+| 101–130 | Real FastAPI (core + auth + DB)             | ⬜     |
+| 131–160 | Production hardening (testing + infra)      | ⬜     |
+| 161–199 | Speed drills + synthesis                    | ⬜     |
+| 200     | Final boss                                  | ⬜     |
 
 ---
 
@@ -79,22 +80,22 @@ Project 2: Not started
 - global error handler — `ERROR_HANDLERS` registry ✅ drill 65
 - prefix groups — `Router` class with `.route()` method ✅ drill 66
 - async context manager — lifespan pattern ✅ drill 67
-- dependency graph — one dep calls another
-- response model — validate output with Pydantic
-- final boss — mini HTTP router, all above combined
+- dependency graph — one dep calls another ✅ drill 68
+- response model — validate output with Pydantic ✅ drill 69
+- final boss — mini HTTP router, all above combined ✅ drill 70
 
 ### First Mixes (71–80) ⬜
 
-- Pydantic + OOP decorator
-- async rate limiter with `asyncio.sleep`
-- class-based router — registry + OOP + dispatch
-- nested Pydantic models in dispatch
-- parallel dependency resolution with `gather`
-- custom exception hierarchy — base → domain → HTTP-mappable
-- `contextvars` — request-scoped state without passing everywhere
-- async queue — background task pattern
-- semaphore inside decorator — concurrency limiter
-- final boss — async class router, parallel deps, nested Pydantic, custom exceptions
+- Pydantic + OOP decorator ✅ drill 71
+- async rate limiter with `asyncio.sleep`✅ drill 72
+- class-based router — registry + OOP + dispatch ✅ drill 73
+- nested Pydantic models in dispatch ✅ drill 74
+- parallel dependency resolution with `gather` ✅ drill 75
+- custom exception hierarchy — base → domain → HTTP-mappable ✅ drill 76
+- `contextvars` — request-scoped state without passing everywhere ✅ drill 77
+- async queue — background task pattern ✅ drill 78
+- semaphore inside decorator — concurrency limiter ✅ drill 79
+- final boss — async class router, parallel deps, nested Pydantic, custom exceptions ✅ drill 80
 
 ---
 
@@ -281,4 +282,4 @@ async with lifespan():
 
 - Toy: `APP_STATE = {}` dict shared with handlers
 - Real: `app.state.db = ...` — same idea, FastAPI manages the state object
->>>>>>> parent of dde9a43 (Merge pull request #2 from yam1yamiyam1/copilot/is-my-fastapi-mastery-aligned)
+  > > > > > > > parent of dde9a43 (Merge pull request #2 from yam1yamiyam1/copilot/is-my-fastapi-mastery-aligned)
