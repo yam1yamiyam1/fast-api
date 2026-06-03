@@ -20,14 +20,13 @@ This file is the single source of truth. Update after every session.
 ## Progress Tracker
 
 ```
-Current Drill:     68 (in progress)
-Current Phase:     Phase 1 — Python Internals
-Current Block:     Dynamic Dispatch Deep Dive (61–70)
-Next Mechanic:     Dependency graph — one dep calls another
-Completed Blocks:  OOP Decorators (51–60), Dispatch returns values (61),
-                   Path pattern matching (62), Multi-verb routing (63),
-                   Before/after hooks (64), Global error handler (65)
-Project 1:         Not started — begins after drill 80
+Current Drill:     80 (completed)
+Current Phase:     Phase 1 — Python Internals (completed)
+Current Block:     First Mixes (71–80) (completed)
+Next Mechanic:     Project 1 start — FastAPI CRUD API
+Completed Blocks:  OOP Decorators (51–60), Dynamic Dispatch Deep Dive (61–70),
+                   First Mixes (71–80)
+Project 1:         Ready to start — begin now
 ```
 
 ---
@@ -57,8 +56,8 @@ Project 1:         Not started — begins after drill 80
 | 31–40   | Registry decorators                         | ✅             |
 | 41–50   | Toy dispatch + toy middleware + toy DI      | ✅             |
 | 51–60   | OOP decorators                              | ✅             |
-| 61–70   | Dynamic dispatch deep dive                  | 🔄 in progress |
-| 71–80   | First mixes (2 concepts)                    | ⬜             |
+| 61–70   | Dynamic dispatch deep dive                  | ✅             |
+| 71–80   | First mixes (2 concepts)                    | ✅             |
 | 81–100  | Harder combos — gap filling after Project 1 | ⬜             |
 | 101–130 | Real FastAPI (core + auth + DB)             | ⬜             |
 | 131–160 | Production hardening (testing + infra)      | ⬜             |
