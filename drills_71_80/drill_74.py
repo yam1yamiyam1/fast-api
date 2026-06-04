@@ -80,6 +80,7 @@ async def run_drill_73():
 
         def register(self, action: str):
             def decorator(func: Callable):
+
                 self.routes[action] = func
                 return func
 
