@@ -4,8 +4,8 @@ Current Drill: 80 (completed)
 Current Phase: Phase 1 — Python Internals (completed)
 Next: Project 1 — FastAPI CRUD API
 Next Drill Range: 81–100 (Harder combos — gap filling after Project 1)
-Project 1: Ready to start — begin now
-Project 1 Stage: Stage 1 — not started
+Project 1: In progress
+Project 1 Stage: Stage 2 — not started (Hotel scenario)
 Project 2: Not started
 
 ## Pointers (read only when needed)

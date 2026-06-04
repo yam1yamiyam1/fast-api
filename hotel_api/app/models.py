@@ -10,7 +10,7 @@ class GuestCreate(BaseModel):  # Post
 
 
 class GuestUpdate(BaseModel):  # PATCH
-    name: Optional[str] = None
+    name: Optional[str] = Field(min_length=1, default=None)
     email: Optional[EmailStr] = None
     room_number: Optional[int] = Field(gt=0, default=None)
     checked_in: Optional[bool] = None

@@ -1,8 +1,13 @@
 import re
 from typing import Callable
 
-from exceptions import MethodNotAllowedException, NotFoundException, ValidationException
 from pydantic import BaseModel, ValidationError
+
+from app.exceptions import (
+    MethodNotAllowedException,
+    NotFoundException,
+    ValidationException,
+)
 
 
 def path_to_regex(pattern: str) -> re.Pattern:
@@ -42,10 +47,13 @@ class Router:
                             raise ValidationException("Invalid request body")
                         result = await func(**kwargs, body=valid_body)
                     else:
-                        return await func(**kwargs)
+                        result = await func(**kwargs)
                     if rp_model:
                         if isinstance(result, dict):
-                            return rp_model(**result).model_dump()
+                            try:
+                                return rp_model(**result).model_dump()
+                            except ValidationError:
+                                raise ValidationException("Invalid response body")
                         elif isinstance(result, rp_model):
                             return result.model_dump()
                     else:

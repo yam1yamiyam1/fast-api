@@ -1,6 +1,7 @@
-from exceptions import NotFoundException
 from main import guest_id_counter, guest_store
-from models import GuestCreate, GuestResponse, GuestUpdate
+
+from app.exceptions import NotFoundException
+from app.models import GuestCreate, GuestResponse, GuestUpdate
 
 
 async def create_guest(body: GuestCreate):
@@ -13,19 +14,26 @@ async def create_guest(body: GuestCreate):
 
 
 async def get_guest(id):
-    if id not in guest_store:
+    guest_id = int(id)
+    if guest_id not in guest_store:
         raise NotFoundException(f"Guest {id} not found")
-    return guest_store[str(id)]
+    return guest_store[guest_id]
 
 
 async def update_guest(id, body: GuestUpdate):
-    if id not in guest_store:
+    guest_id = int(id)
+    if guest_id not in guest_store:
         raise NotFoundException(f"Guest {id} not found")
-    guest_store[str(id)] = {**guest_store[str(id)], **body.model_dump()}
+    guest_data = guest_store[int(id)]
+    guest_store[guest_id] = GuestResponse(
+        **{**guest_data.model_dump(), **body.model_dump(exclude_unset=True)}
+    )
+    return guest_store[guest_id]
 
 
 async def delete_guest(id):
-    if id not in guest_store:
+    guest_id = int(id)
+    if guest_id not in guest_store:
         raise NotFoundException(f"Guest {id} not found")
-    del guest_store[str(id)]
-    return {"deleted": True, "id": id}
+    del guest_store[guest_id]
+    return {"deleted": True, "id": guest_id}

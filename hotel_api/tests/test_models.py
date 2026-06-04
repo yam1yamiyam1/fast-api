@@ -1,12 +1,11 @@
 import pytest
+from app.models import GuestCreate, GuestResponse, GuestUpdate, RoomCreate, RoomResponse
 from pydantic import ValidationError
-
-from app.models import GuestCreate, GuestUpdate, GuestResponse, RoomCreate, RoomResponse
-
 
 # ---------------------------------------------------------------------------
 # GuestCreate
 # ---------------------------------------------------------------------------
+
 
 def test_guest_create_valid():
     g = GuestCreate(name="Amara Osei", email="amara@hotel.com")
@@ -39,6 +38,7 @@ def test_guest_create_negative_room_rejected():
 # GuestUpdate
 # ---------------------------------------------------------------------------
 
+
 def test_guest_update_all_optional():
     u = GuestUpdate()
     assert u.name is None
@@ -62,22 +62,34 @@ def test_guest_update_empty_name_rejected():
 # GuestResponse
 # ---------------------------------------------------------------------------
 
+
 def test_guest_response_valid():
-    g = GuestResponse(id=1, name="Amara Osei", email="amara@hotel.com",
-                      room_number=None, checked_in=False)
+    g = GuestResponse(
+        id=1,
+        name="Amara Osei",
+        email="amara@hotel.com",
+        room_number=None,
+        checked_in=False,
+    )
     assert g.id == 1
     assert g.checked_in is False
 
 
 def test_guest_response_negative_id_rejected():
     with pytest.raises(ValidationError):
-        GuestResponse(id=0, name="Amara Osei", email="amara@hotel.com",
-                      room_number=None, checked_in=False)
+        GuestResponse(
+            id=0,
+            name="Amara Osei",
+            email="amara@hotel.com",
+            room_number=None,
+            checked_in=False,
+        )
 
 
 # ---------------------------------------------------------------------------
 # RoomCreate
 # ---------------------------------------------------------------------------
+
 
 def test_room_create_valid():
     r = RoomCreate(number=101, floor=1, capacity=2)
@@ -109,6 +121,7 @@ def test_room_create_capacity_7_rejected():
 # ---------------------------------------------------------------------------
 # RoomResponse
 # ---------------------------------------------------------------------------
+
 
 def test_room_response_valid():
     r = RoomResponse(id=1, number=101, floor=1, capacity=2, occupied=False)
