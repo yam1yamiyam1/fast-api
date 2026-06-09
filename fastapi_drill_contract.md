@@ -9,3 +9,4 @@
 - All tests use `assert`, not just print
 - One new concept per drill, everything else is revision
 - Never reuse a scenario from the Used list
+- After generating a drill, go silent — wait for the student's attempt
