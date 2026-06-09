@@ -1,8 +1,8 @@
 ## State
 
-Current Drill: 80 (completed)
+Current Drill: 82 (completed)
 Current Phase: Phase 2 — Real FastAPI
-Next: Drills 81–100 (Harder combos — gap filling)
+Next: Drill 83
 Next Drill Range: 81–100
 Project 1: Completed (Hotel scenario — toy dispatcher, pure Python)
 Project 2: Completed (Stock Exchange — full toy FastAPI system)
