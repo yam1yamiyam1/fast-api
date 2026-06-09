@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager  # noqa: F401
+
 from exceptions import NotFoundException
 from models import (
     ListingCollectionResponse,
@@ -9,12 +11,22 @@ from models import (
 )
 from router import Router
 
+APP_STATE = {}
 listing_store: dict[int, dict] = {}
 listing_counter: dict[str, int] = {"value": 1}
 order_store: dict[int, dict] = {}
 order_counter: dict[str, int] = {"value": 1}
 
 router = Router()
+
+
+@asynccontextmanager
+async def lifespan():
+    APP_STATE["status"] = "open"
+    try:
+        yield
+    finally:
+        APP_STATE["status"] = "closed"
 
 
 async def create_listing(body: ListingCreate):
@@ -61,6 +73,7 @@ async def get_order(id: int):
     return order_store[id]
 
 
+router.set_lifespan(lifespan)
 router.register("POST", "/listings", create_listing, ListingCreate, ListingResponse)
 router.register("GET", "/listings", get_all_listings, None, ListingCollectionResponse)
 router.register("GET", "/listings/{id}", get_listing, None, ListingResponse)
