@@ -1,15 +1,17 @@
 # Roadmap
 
-| Stage          | Focus                                           | When                    |
-| -------------- | ----------------------------------------------- | ----------------------- |
-| Drills 51–80   | OOP decorators + dynamic dispatch + first mixes | Now (done)              |
-| Project 1      | CRUD API + auth + deploy + README               | After drill 80          |
-| Apply          | Start after Project 1 ships                     | After Project 1         |
-| Drills 81–100  | Gap filling after Project 1                     | Parallel with Project 1 |
-| Drills 101–130 | Real FastAPI (core + auth + DB)                 | After Project 1         |
-| Project 2      | Production API + tests + Docker + deploy        | After drill 130         |
-| Drills 131–160 | Testing + infra hardening                       | Parallel with Project 2 |
-| Portfolio      | 2 projects, live URLs                           | Before applying broadly |
+| Stage            | Focus                                           | When                     |
+| ---------------- | ----------------------------------------------- | ------------------------ |
+| Drills 51–80     | OOP decorators + dynamic dispatch + first mixes | Done ✅                  |
+| Toy Project 1    | Hotel API — toy dispatcher, pure Python         | Done ✅                  |
+| Toy Project 2    | Stock Exchange — extended toy system            | Done ✅                  |
+| Drills 81–100    | Gap filling after toy projects                  | Now 🔄                   |
+| Real Project 1   | CRUD API + auth + deploy + README               | After drill 100          |
+| Apply            | Start after Real Project 1 ships                | After Real Project 1     |
+| Drills 101–130   | Real FastAPI (core + auth + DB)                 | Parallel with Project 1  |
+| Real Project 2   | Production API + tests + Docker + deploy        | After drill 130          |
+| Drills 131–160   | Testing + infra hardening                       | Parallel with Project 2  |
+| Portfolio        | 2 projects, live URLs                           | Before applying broadly  |
 
 # Drill Map
 
@@ -23,7 +25,7 @@
 | 51–60   | OOP decorators                              | ✅     |
 | 61–70   | Dynamic dispatch deep dive                  | ✅     |
 | 71–80   | First mixes (2 concepts)                    | ✅     |
-| 81–100  | Harder combos — gap filling after Project 1 | ⬜     |
+| 81–100  | Harder combos — gap filling                 | 🔄     |
 | 101–130 | Real FastAPI (core + auth + DB)             | ⬜     |
 | 131–160 | Production hardening (testing + infra)      | ⬜     |
 | 161–199 | Speed drills + synthesis                    | ⬜     |
@@ -31,9 +33,27 @@
 
 ---
 
+## Toy Project 1 — Hotel API (completed before drill 81)
+
+Pure Python toy dispatcher. No FastAPI.
+Scenario: Hotel — CRUD handlers, class-based router, in-memory store.
+
+## Toy Project 2 — Stock Exchange (completed before drill 81)
+
+Extended pure Python toy FastAPI system. Requested to solidify before gap filling.
+
+Stage 1 — Core router + models: Pydantic models, regex path matching, 404/405,
+  request/response validation, exception hierarchy, in-memory CRUD.
+Stage 2 — Middleware + dependencies: sync/async middleware chain, add_middleware(),
+  dependency injection dict, deps resolved and injected as kwargs.
+Stage 3 — Lifespan + background tasks + concurrency: asynccontextmanager lifespan,
+  start()/stop(), asyncio.create_task, asyncio.to_thread, asyncio.Semaphore, APP_STATE.
+
+---
+
 ## Phase 2: Real FastAPI (Drills 101–130)
 
-> **Start Project 1 at drill 80, start applying after it ships**
+> **Start Real Project 1 at drill 100, start applying after it ships**
 
 ### Core FastAPI (101–110)
 
@@ -78,7 +98,7 @@
 
 ## Phase 3: Production (Drills 131–160)
 
-> **Start Project 2 at drill 131**
+> **Start Real Project 2 at drill 131**
 
 ### Testing (131–140)
 
@@ -121,16 +141,16 @@
 
 ---
 
-## Projects (non-negotiable)
+## Real Projects (non-negotiable)
 
-### Project 1 — after drill 80
+### Real Project 1 — after drill 100
 
 - FastAPI CRUD API
 - users, posts, JWT auth
 - deployed, live URL, GitHub README
 - **start applying for jobs here**
 
-### Project 2 — after drill 130
+### Real Project 2 — after drill 130
 
 - your choice of domain
 - full test suite, Docker, deployed
