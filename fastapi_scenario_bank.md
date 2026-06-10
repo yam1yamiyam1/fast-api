@@ -5,10 +5,10 @@ Gym, Online Checkout, Concert Venue, Hospital, Airport, Bank Account,
 Gym Turnstile, Operating Room, Restaurant Kitchen, Security System,
 Smart Home, Command Center, Mission Control, Space Station, Nuclear Plant,
 Vending Machine, City Directory, Blog API, Audit Logger, Crash-Proof API, Hotel, Stock Exchange,
-University
+University, Courthouse
 
 **Available:**
-Courthouse, Shipping Port, Train Station, Pharmacy,
+Shipping Port, Train Station, Pharmacy,
 Power Grid, Police Station, Embassy, Library,
 Immigration Checkpoint, Data Center, Fire Station, Museum, Casino,
 Aquarium, Seaport, City Hall, Unemployment Office, Customs Office,
