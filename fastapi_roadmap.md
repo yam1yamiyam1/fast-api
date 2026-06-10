@@ -5,12 +5,12 @@
 | Drills 51–80     | OOP decorators + dynamic dispatch + first mixes | Done ✅                  |
 | Toy Project 1    | Hotel API — toy dispatcher, pure Python         | Done ✅                  |
 | Toy Project 2    | Stock Exchange — extended toy system            | Done ✅                  |
-| Drills 81–100    | Gap filling after toy projects                  | Now 🔄                   |
-| Real Project 1   | CRUD API + auth + deploy + README               | After drill 100          |
+| Drills 81–90     | Gap filling after toy projects                  | Done ✅                  |
+| Drills 91–130    | Real FastAPI (intro + auth + DB)                | Now 🔄                   |
+| Real Project 1   | CRUD API + auth + deploy + README               | After drill 130          |
 | Apply            | Start after Real Project 1 ships                | After Real Project 1     |
-| Drills 101–130   | Real FastAPI (core + auth + DB)                 | Parallel with Project 1  |
-| Real Project 2   | Production API + tests + Docker + deploy        | After drill 130          |
-| Drills 131–160   | Testing + infra hardening                       | Parallel with Project 2  |
+| Drills 131–160   | Production hardening (testing + infra)          | After Real Project 1     |
+| Real Project 2   | Production API + tests + Docker + deploy        | After drill 160          |
 | Portfolio        | 2 projects, live URLs                           | Before applying broadly  |
 
 # Drill Map
@@ -25,8 +25,8 @@
 | 51–60   | OOP decorators                              | ✅     |
 | 61–70   | Dynamic dispatch deep dive                  | ✅     |
 | 71–80   | First mixes (2 concepts)                    | ✅     |
-| 81–100  | Harder combos — gap filling                 | 🔄     |
-| 101–130 | Real FastAPI (core + auth + DB)             | ⬜     |
+| 81–90   | Harder combos — gap filling                 | ✅     |
+| 91–130  | Real FastAPI (intro + auth + DB)            | 🔄     |
 | 131–160 | Production hardening (testing + infra)      | ⬜     |
 | 161–199 | Speed drills + synthesis                    | ⬜     |
 | 200     | Final boss                                  | ⬜     |
@@ -51,24 +51,24 @@ Stage 3 — Lifespan + background tasks + concurrency: asynccontextmanager lifes
 
 ---
 
-## Phase 2: Real FastAPI (Drills 101–130)
+## Phase 2: Real FastAPI (Drills 91–130)
 
-> **Start Real Project 1 at drill 100, start applying after it ships**
+> **Start Real Project 1 after drill 130, start applying after it ships**
 
-### Core FastAPI (101–110)
+### Intro / Bridge (91–100)
 
-- `@app.get`, `uvicorn.run`, test with `httpx`
+- install FastAPI + uvicorn, run first app
+- `@app.get` / `@app.post` — route registration
 - path params + query params + type coercion
 - request body with Pydantic model
 - `response_model=` — validate output
 - `HTTPException` + status codes
 - `Depends()` — single injected dependency
 - `Depends()` chained — one dep calls another
-- `Depends()` with class — stateful dependency
 - `BackgroundTasks` — fire and forget
 - lifespan — startup/shutdown with `asynccontextmanager`
 
-### Auth (111–120)
+### Auth (101–110)
 
 - `OAuth2PasswordBearer` — extract token from header
 - JWT decode — verify signature and expiry with `python-jose`
@@ -81,7 +81,7 @@ Stage 3 — Lifespan + background tasks + concurrency: asynccontextmanager lifes
 - auth middleware — global vs per-route
 - final boss — JWT + roles + scopes in one system
 
-### Database (121–130)
+### Database (111–120)
 
 - SQLAlchemy async setup — engine, session factory
 - first table + Alembic migration
@@ -94,11 +94,24 @@ Stage 3 — Lifespan + background tasks + concurrency: asynccontextmanager lifes
 - filters + search
 - final boss — full CRUD API with auth + DB
 
+### Advanced Combos (121–130)
+
+- auth + DB together — protected routes with DB-backed users
+- middleware + DB — request logging to DB
+- background tasks + DB — async writes after response
+- pagination + filters + auth
+- file upload + DB metadata
+- WebSockets intro
+- rate limiting with Redis
+- caching layer
+- full system integration — all patterns in one app
+- final boss — production-ready combined system
+
 ---
 
 ## Phase 3: Production (Drills 131–160)
 
-> **Start Real Project 2 at drill 131**
+> **Start Real Project 2 after drill 160**
 
 ### Testing (131–140)
 
@@ -143,14 +156,14 @@ Stage 3 — Lifespan + background tasks + concurrency: asynccontextmanager lifes
 
 ## Real Projects (non-negotiable)
 
-### Real Project 1 — after drill 100
+### Real Project 1 — after drill 130
 
 - FastAPI CRUD API
 - users, posts, JWT auth
 - deployed, live URL, GitHub README
 - **start applying for jobs here**
 
-### Real Project 2 — after drill 130
+### Real Project 2 — after drill 160
 
 - your choice of domain
 - full test suite, Docker, deployed

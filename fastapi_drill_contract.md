@@ -13,3 +13,4 @@
 - Requirements and tests must be consistent — every signature, parameter, and behavior in the tests must match exactly what the requirements describe
 - Requirements must be ordered by dependency — if X is used inside Y, X must be defined before Y in the requirements list
 - Every argument and variable in the Requirements block must include: name, type, and one plain-English sentence explaining what it represents in the scenario domain — not just its technical type. Example: manifest: dict — the cargo document being validated, passed as-is to the inspector. Never leave a domain variable unnamed or unexplained.
+- For Real FastAPI concepts (drills 91–130): if the concept maps to something built in pure Python drills, show a translation block — "Pure Python:" then "FastAPI:" side by side. Only use patterns actually drilled, never invented. If no pure Python equivalent exists, skip the block and explain from scratch.
