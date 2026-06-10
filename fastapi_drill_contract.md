@@ -10,3 +10,6 @@
 - One new concept per drill, everything else is revision
 - Never reuse a scenario from the Used list
 - After generating a drill, go silent — wait for the student's attempt
+- Requirements and tests must be consistent — every signature, parameter, and behavior in the tests must match exactly what the requirements describe
+- Requirements must be ordered by dependency — if X is used inside Y, X must be defined before Y in the requirements list
+- Every argument and variable in the Requirements block must include: name, type, and one plain-English sentence explaining what it represents in the scenario domain — not just its technical type. Example: manifest: dict — the cargo document being validated, passed as-is to the inspector. Never leave a domain variable unnamed or unexplained.
