@@ -56,9 +56,37 @@ def run_drill_84():
     TESTS
     =====
     """
-
     # --- YOUR CODE HERE ---
 
+    class PortManifest:
+        def __init__(self):
+            self.entries = []
+            self.is_open: bool = False
+
+        async def open_gates(self):
+            self.is_open = True
+
+        async def close_gates(self):
+            self.is_open = False
+            self.entries = []
+
+        def log(self, cargo: str):
+            if self.is_open:
+                self.entries.append(cargo)
+
+    class Port:
+        def __init__(self):
+            self.manifest: Optional[PortManifest] = None
+
+        async def __aenter__(self):
+            self.manifest = PortManifest()
+            await self.manifest.open_gates()
+            return self.manifest
+
+        async def __aexit__(self, exc_type, exc, tb):
+            await self.manifest.close_gates()
+
+    # ==========test====================
     async def main():
         # Test 1: gates open on __aenter__, manifest returned as context value
         port = Port()
