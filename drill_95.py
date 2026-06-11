@@ -82,6 +82,34 @@ def run_drill_95():
 
     TABLES: dict[str, list] = {"blackjack": [], "poker": [], "roulette": []}
 
+    app = FastAPI()
+
+    @app.post("/players")
+    def register_player(body: PlayerIn):
+        if body.name in PLAYERS:
+            raise HTTPException(status_code=409, detail="player already registered")
+        PLAYERS[body.name] = body.model_dump()
+        return PLAYERS[body.name]
+
+    @app.get("/players/{name}")
+    def get_player(name: str):
+        if name not in PLAYERS:
+            raise HTTPException(status_code=404, detail="player not found")
+        return PLAYERS[name]
+
+    @app.post("/tables/{table_name}/join")
+    def add_player_to_table(table_name: str, body: PlayerIn):
+        if table_name not in TABLES:
+            raise HTTPException(status_code=404, detail="table not found")
+
+        if body.name not in PLAYERS:
+            raise HTTPException(status_code=404, detail="player not found")
+        found_table = TABLES[table_name]
+        if len(found_table) >= 3:
+            raise HTTPException(status_code=403, detail="table is full")
+        found_table.append(body.name)
+        return {"table": table_name, "seated": found_table}
+
     # ── TESTS ──────────────────────────────────────────────────────────
     client = TestClient(app)  # noqa: F821
 
