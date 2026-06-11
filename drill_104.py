@@ -1,12 +1,13 @@
 # drill_104.py
 # noqa: F401
 
-from fastapi import FastAPI, Depends, HTTPException  # noqa: F401
+from datetime import datetime, timedelta, timezone  # noqa: F401
+
+from fastapi import Depends, FastAPI, HTTPException  # noqa: F401
 from fastapi.security import OAuth2PasswordBearer  # noqa: F401
 from fastapi.testclient import TestClient  # noqa: F401
-from jose import jwt, JWTError  # noqa: F401
+from jose import JWTError, jwt  # noqa: F401
 from pydantic import BaseModel  # noqa: F401
-from datetime import datetime, timezone, timedelta  # noqa: F401
 
 
 def run_drill_104():
@@ -63,9 +64,52 @@ def run_drill_104():
        Returns {"status": "calibrated", "by": current_user.username}.
     """
 
+    # --- YOUR CODE HERE ---
+    SECRET_KEY: str = "weather-secret"
+    ALGORITHM: str = "HS256"
+
+    class User(BaseModel):
+        username: str
+        role: str
+
+    def make_token(username: str, role: str, expires_delta: timedelta):
+        return jwt.encode(
+            {
+                "sub": username,
+                "role": role,
+                "exp": datetime.now(timezone.utc) + expires_delta,
+            },
+            SECRET_KEY,
+            ALGORITHM,
+        )
+
+    oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
+
+    def get_current_user(token: str = Depends(oauth2_scheme)):
+        try:
+            payload = jwt.decode(token=token, key=SECRET_KEY, algorithms=[ALGORITHM])
+        except JWTError:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        sub, role = payload["sub"], payload["role"]
+        return User(username=sub, role=role)
+
+    def require_role(required_role: str):
+        def dependency(current_user: User = Depends(get_current_user)):
+            if current_user.role != required_role:
+                raise HTTPException(status_code=403, detail="Forbidden")
+            return current_user
+
+        return dependency
+
     app = FastAPI()
 
-    # --- YOUR CODE HERE ---
+    @app.get("/sensors")
+    def get_sensors(current_user: User = Depends(require_role("meteorologist"))):
+        return {"data": "sensor readings", "reader": current_user.username}
+
+    @app.post("/calibrate")
+    def calibrate_sensors(current_user: User = Depends(require_role("admin"))):
+        return {"status": "calibrated", "by": current_user.username}
 
     client = TestClient(app, raise_server_exceptions=False)
 

@@ -63,6 +63,7 @@ def run_drill_103():
         role: str
 
     def make_token(username: str, role: str, expires_delta: timedelta):
+
         return jwt.encode(
             {
                 "sub": username,
