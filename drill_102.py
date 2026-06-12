@@ -186,11 +186,81 @@ def run_drill_102():
     from pydantic import BaseModel  # noqa: F401
 
     # --- YOUR CODE HERE ---
+    SECRET_KEY: str = "clinic-secret-key"
+    ALGO: str = "HS256"
+    APP_STATE: dict = {}
+    ANIMALS: dict[int, dict] = {
+        1: {
+            "id": 1,
+            "name": "Rex",
+            "species": "dog",
+            "owner": "alice",
+            "internal_notes": "aggressive",
+        },
+        2: {
+            "id": 2,
+            "name": "Whiskers",
+            "species": "cat",
+            "owner": "bob",
+            "internal_notes": "diabetic",
+        },
+        3: {
+            "id": 3,
+            "name": "Tweety",
+            "species": "bird",
+            "owner": "alice",
+            "internal_notes": "wing injury",
+        },
+    }
+
+    class AnimalOut(BaseModel):
+        id: int
+        name: str
+        species: str
+        owner: str
+
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        APP_STATE["secret"] = SECRET_KEY
+        yield
+        APP_STATE.clear()
+
+    oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
+
+    def make_token(username: str, secret: str, minutes: int):
+        return jwt.encode(
+            claims={
+                "sub": username,
+                "exp": datetime.now(timezone.utc) + timedelta(minutes=minutes),
+            },
+            key=secret,
+            algorithm=ALGO,
+        )
+
+    def get_current_vet(token: str = Depends(oauth2_scheme)):
+        try:
+            payload = jwt.decode(
+                token=token, key=APP_STATE["secret"], algorithms=[ALGO]
+            )
+            return {"username": payload["sub"]}
+        except JWTError:
+            raise HTTPException(401, detail="invalid token")
+
+    app = FastAPI(lifespan=lifespan)
+
+    @app.get("/animals", response_model=list[AnimalOut])
+    def get_animals(owner: Optional[str] = None, _=Depends(get_current_vet)):
+        return [a for a in ANIMALS.values() if not owner or a["owner"] == owner]
+
+    @app.get("/animals/{animal_id}", response_model=AnimalOut)
+    def get_animal(animal_id: int, _=Depends(get_current_vet)):
+        if animal_id := ANIMALS.get(animal_id):
+            return animal_id
+        raise HTTPException(404, detail="animal not found")
 
     # ── Tests ─────────────────────────────────────────────────────────────────
 
     with TestClient(app) as client:
-
         valid_token = make_token("dr-smith", SECRET_KEY, minutes=30)
         auth = {"Authorization": f"Bearer {valid_token}"}
 
@@ -201,7 +271,9 @@ def run_drill_102():
         data = r.json()
         assert len(data) == 3
         assert all("internal_notes" not in a for a in data)
-        print(f"  animals returned: {len(data)}, internal_notes stripped: {all('internal_notes' not in a for a in data)}")
+        print(
+            f"  animals returned: {len(data)}, internal_notes stripped: {all('internal_notes' not in a for a in data)}"
+        )
         print("  PASS")
 
         # Test 2: filter by owner
@@ -222,18 +294,20 @@ def run_drill_102():
         assert animal["id"] == 2
         assert animal["name"] == "Whiskers"
         assert "internal_notes" not in animal
-        print(f"  id: {animal['id']}, name: {animal['name']}, internal_notes present: {'internal_notes' in animal}")
+        print(
+            f"  id: {animal['id']}, name: {animal['name']}, internal_notes present: {'internal_notes' in animal}"
+        )
         print("  PASS")
 
         # Test 4: missing token → 401
-        print("Test 4: missing token → 401")
+        print("Test 4: missing token -> 401")
         r = client.get("/animals")
         assert r.status_code == 401
         print(f"  status: {r.status_code}")
         print("  PASS")
 
         # Test 5: bad signature → 401
-        print("Test 5: token signed with wrong key → 401")
+        print("Test 5: token signed with wrong key -> 401")
         bad_token = make_token("dr-smith", "wrong-secret", minutes=30)
         r = client.get("/animals", headers={"Authorization": f"Bearer {bad_token}"})
         assert r.status_code == 401
@@ -242,7 +316,7 @@ def run_drill_102():
         print("  PASS")
 
         # Test 6: expired token → 401
-        print("Test 6: expired token → 401")
+        print("Test 6: expired token -> 401")
         expired_token = make_token("dr-smith", SECRET_KEY, minutes=-1)
         r = client.get("/animals", headers={"Authorization": f"Bearer {expired_token}"})
         assert r.status_code == 401
@@ -251,7 +325,7 @@ def run_drill_102():
         print("  PASS")
 
         # Test 7: animal not found → 404
-        print("Test 7: unknown animal_id → 404")
+        print("Test 7: unknown animal_id -> 404")
         r = client.get("/animals/999", headers=auth)
         assert r.status_code == 404
         assert r.json()["detail"] == "animal not found"
