@@ -162,6 +162,46 @@ def run_drill_107():
     from pydantic import BaseModel  # noqa: F401
 
     # --- YOUR CODE HERE ---
+    CREW: dict[str, str] = {"kapitan": "depth-1", "navigator": "depth-2"}
+    SYSTEMS: list[dict] = [
+        {"id": 1, "system": "ballast", "status": "nominal", "internal_code": "BT-01"},
+        {"id": 2, "system": "sonar", "status": "active", "internal_code": "SN-07"},
+        {"id": 3, "system": "reactor", "status": "nominal", "internal_code": "RC-03"},
+    ]
+    DEPTH_LOG: list[str] = []
+
+    class SystemOut(BaseModel):
+        id: int
+        system: str
+        status: str
+
+    class AdjustIn(BaseModel):
+        meters: int
+
+    security = HTTPBasic()
+
+    def get_current_crew(credentials: HTTPBasicCredentials = Depends(security)):
+        if (password := CREW.get(credentials.username)) and secrets.compare_digest(
+            credentials.password, password
+        ):
+            return credentials.username
+        raise HTTPException(401, detail="invalid credentials")
+
+    def log_adjustment(username: str, meters: int):
+        DEPTH_LOG.append(f"[LOG] {username} adjusted depth by {meters}m")
+
+    app = FastAPI()
+
+    @app.get("/systems", response_model=list[SystemOut])
+    def get_sys_readings(_=Depends(get_current_crew)):
+        return SYSTEMS
+
+    @app.post("/depth")
+    def adjust_depth(
+        body: AdjustIn, bg: BackgroundTasks, username: str = Depends(get_current_crew)
+    ):
+        bg.add_task(log_adjustment, username, body.meters)
+        return {"username": username, "meters": body.meters, "status": "submitted"}
 
     # ── Tests ─────────────────────────────────────────────────────────────────
 
@@ -174,11 +214,13 @@ def run_drill_107():
     data = r.json()
     assert len(data) == 3
     assert all("internal_code" not in s for s in data)
-    print(f"  systems: {len(data)}, internal_code stripped: {all('internal_code' not in s for s in data)}")
+    print(
+        f"  systems: {len(data)}, internal_code stripped: {all('internal_code' not in s for s in data)}"
+    )
     print("  PASS")
 
     # Test 2: wrong password → 401
-    print("Test 2: wrong password → 401")
+    print("Test 2: wrong password -> 401")
     r = client.get("/systems", auth=("kapitan", "wrong"))
     assert r.status_code == 401
     assert r.json()["detail"] == "invalid credentials"
@@ -186,7 +228,7 @@ def run_drill_107():
     print("  PASS")
 
     # Test 3: unknown username → 401
-    print("Test 3: unknown username → 401")
+    print("Test 3: unknown username -> 401")
     r = client.get("/systems", auth=("ghost", "depth-1"))
     assert r.status_code == 401
     assert r.json()["detail"] == "invalid credentials"
@@ -194,7 +236,7 @@ def run_drill_107():
     print("  PASS")
 
     # Test 4: missing auth header → 401
-    print("Test 4: missing auth header → 401")
+    print("Test 4: missing auth header -> 401")
     r = client.get("/systems")
     assert r.status_code == 401
     print(f"  status: {r.status_code}")
@@ -208,7 +250,9 @@ def run_drill_107():
     assert result["username"] == "navigator"
     assert result["meters"] == -50
     assert result["status"] == "submitted"
-    print(f"  username: {result['username']}, meters: {result['meters']}, status: {result['status']}")
+    print(
+        f"  username: {result['username']}, meters: {result['meters']}, status: {result['status']}"
+    )
     print("  PASS")
 
     # Test 6: background log recorded after adjustment
