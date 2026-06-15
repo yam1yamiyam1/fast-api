@@ -65,7 +65,7 @@
 # WIRING EXAMPLE
 # --------------
 # from fastapi import FastAPI, Request
-# from fastapi.responses import JSONResponse
+# from fastapi.responses import JSONResponsea
 # from fastapi.testclient import TestClient
 #
 # app = FastAPI()
@@ -206,10 +206,34 @@ def run_drill_109():
 
     def get_current_user(token: str = Depends(oauth2_scheme)):
         try:
-            payload = jwt.decode(token=token, key=SECRET_KEY, algorithms=ALGO)
+            payload = jwt.decode(token=token, key=SECRET_KEY, algorithms=[ALGO])
             return User(username=payload.get("sub"), role=payload.get("role"))
         except JWTError:
             raise HTTPException(401, detail="invalid token")
+
+    app = FastAPI()
+
+    @app.middleware("http")
+    async def auth_middleware(request: Request, call_next):
+        if request.url.path in PUBLIC_PATHS:
+            return await call_next(request)
+        if request.headers.get("X-API-Key", "") not in VALID_API_KEYS:
+            return JSONResponse({"detail": "not authenticated"}, status_code=401)
+        return await call_next(request)
+
+    @app.get("/health")
+    def health():
+        return {"status": "ok"}
+
+    @app.get("/modules")
+    def get_modules():
+        return MODULES
+
+    @app.post("/eva/approve")
+    def create_approval(user: User = Depends(get_current_user)):
+        if user.role != "commander":
+            raise HTTPException(403, detail="commanders only")
+        return {"approved": True, "by": user.username}
 
     # ── Tests ─────────────────────────────────────────────────────────────────
 
@@ -242,7 +266,7 @@ def run_drill_109():
     print("  PASS")
 
     # Test 3: missing key blocked by middleware → 401
-    print("Test 3: missing API key → 401 from middleware")
+    print("Test 3: missing API key -> 401 from middleware")
     r = client.get("/modules")
     assert r.status_code == 401
     assert r.json()["detail"] == "not authenticated"
@@ -250,7 +274,7 @@ def run_drill_109():
     print("  PASS")
 
     # Test 4: bad key blocked by middleware → 401
-    print("Test 4: invalid API key → 401 from middleware")
+    print("Test 4: invalid API key -> 401 from middleware")
     r = client.get("/modules", headers=bad_key)
     assert r.status_code == 401
     assert r.json()["detail"] == "not authenticated"
@@ -268,7 +292,7 @@ def run_drill_109():
     print("  PASS")
 
     # Test 6: crew role blocked from EVA approval → 403
-    print("Test 6: non-commander blocked from EVA → 403")
+    print("Test 6: non-commander blocked from EVA -> 403")
     r = client.post("/eva/approve", headers=crew_auth)
     assert r.status_code == 403
     assert r.json()["detail"] == "commanders only"
@@ -276,7 +300,7 @@ def run_drill_109():
     print("  PASS")
 
     # Test 7: valid key but no JWT on EVA route → 401
-    print("Test 7: valid API key but no JWT on EVA route → 401")
+    print("Test 7: valid API key but no JWT on EVA route -> 401")
     r = client.post("/eva/approve", headers=key2)
     assert r.status_code == 401
     print(f"  status: {r.status_code}")
