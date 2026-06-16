@@ -224,6 +224,7 @@ def run_drill_110():
     #       Returns {"aborted": command_id, "by": user.username}
     # =========================================================================
 
+    import secrets  # noqa: F401
     from contextlib import asynccontextmanager  # noqa: F401
     from datetime import datetime, timedelta, timezone  # noqa: F401
 
@@ -235,11 +236,202 @@ def run_drill_110():
     from pydantic import BaseModel  # noqa: F401
 
     # --- YOUR CODE HERE ---
+    SECRET_KEY: str = "mission-secret"
+    ALGO = "HS256"
+    APP_STATE: dict = {}
+    VALID_API_KEYS: set[str] = {"mc-key-1"}
+    PUBLIC_PATHS: set[str] = {"/health", "/token"}
+    USERS: dict[str, dict] = {
+        "director-rao": {
+            "password": "pw-rao",
+            "role": "director",
+            "scopes": ["telemetry:read", "commands:write"],
+        },
+        "op-lee": {
+            "password": "pw-lee",
+            "role": "operator",
+            "scopes": ["telemetry:read", "commands:write"],
+        },
+        "analyst-fox": {
+            "password": "pw-fox",
+            "role": "analyst",
+            "scopes": ["telemetry:read"],
+        },
+    }
+    TELEMETRY: list[dict] = [
+        {"id": 1, "metric": "altitude", "value": 408.2, "internal_sensor_id": "S-100"},
+        {"id": 2, "metric": "velocity", "value": 7.66, "internal_sensor_id": "S-200"},
+    ]
+    COMMAND_LOG: list[dict] = []
+
+    class TelemetryOut(BaseModel):
+        id: int
+        metric: str
+        value: float
+
+    class CommandIn(BaseModel):
+        action: str
+
+    class CommandOut(BaseModel):
+        id: int
+        action: str
+        issued_by: str
+
+    class User(BaseModel):
+        username: str
+        role: str
+        scopes: list[str]
+
+    @asynccontextmanager
+    async def lifespan(api: FastAPI):
+        APP_STATE["secret"] = SECRET_KEY
+        yield
+        APP_STATE.clear()
+
+    oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
+
+    def make_access_token(username: str, role: str, scopes: list[str], secret: str):
+        return jwt.encode(
+            claims={
+                "sub": username,
+                "role": role,
+                "scopes": scopes,
+                "type": "access",
+                "exp": datetime.now(timezone.utc) + timedelta(minutes=15),
+            },
+            key=secret,
+            algorithm=ALGO,
+        )
+
+    def make_refresh_token(username: str, secret: str):
+        return jwt.encode(
+            claims={
+                "sub": username,
+                "type": "refresh",
+                "exp": datetime.now(timezone.utc) + timedelta(days=7),
+            },
+            key=secret,
+            algorithm=ALGO,
+        )
+
+    def get_current_user(token: str = Depends(oauth2_scheme)):
+        try:
+            payload = jwt.decode(
+                token=token, key=APP_STATE["secret"], algorithms=[ALGO]
+            )
+            if payload.get("type") != "access":
+                raise JWTError
+            return User(
+                username=payload["sub"],
+                role=payload["role"],
+                scopes=payload.get("scopes", []),
+            )
+        except JWTError:
+            raise HTTPException(401, detail="invalid token")
+
+    def get_refresh_user(token: str = Depends(oauth2_scheme)):
+        try:
+            payload = jwt.decode(
+                token=token, key=APP_STATE["secret"], algorithms=[ALGO]
+            )
+            if payload.get("type") != "refresh":
+                raise JWTError
+            return payload["sub"]
+        except JWTError:
+            raise HTTPException(401, detail="invalid token")
+
+    def require_scope(scope: str):
+        def checker(user: User = Depends(get_current_user)):
+            if scope not in user.scopes:
+                raise HTTPException(403, detail="insufficient scope")
+            return user
+
+        return checker
+
+    def require_role_and_scope(role: str, scope: str):
+        def checker(user: User = Depends(get_current_user)):
+            if user.role != role:
+                raise HTTPException(403, detail="forbidden")
+            if scope not in user.scopes:
+                raise HTTPException(403, detail="insufficient scope")
+            return user
+
+        return checker
+
+    app = FastAPI(lifespan=lifespan)
+
+    @app.middleware("http")
+    async def auth_middleware(request: Request, call_next):
+        if request.url.path in PUBLIC_PATHS:
+            return await call_next(request)
+        if request.headers.get("X-API-Key", "") not in VALID_API_KEYS:
+            return JSONResponse({"detail": "not authenticated"}, status_code=401)
+        return await call_next(request)
+
+    @app.get("/health")
+    def get_health():
+        return {"status": "ok"}
+
+    @app.post("/token")
+    def refresh_token(username: str, password: str):
+        if (user := USERS.get(username)) and secrets.compare_digest(
+            user["password"], password
+        ):
+            return {
+                "access_token": make_access_token(
+                    username=username,
+                    role=user["role"],
+                    scopes=user["scopes"],
+                    secret=APP_STATE["secret"],
+                ),
+                "refresh_token": make_refresh_token(
+                    username=username, secret=APP_STATE["secret"]
+                ),
+            }
+        raise HTTPException(401, detail="invalid credentials")
+
+    @app.post("/refresh")
+    def create_token(username: str = Depends(get_refresh_user)):
+        user = USERS[username]
+        return {
+            "access_token": make_access_token(
+                username=username,
+                role=user["role"],
+                scopes=user["scopes"],
+                secret=APP_STATE["secret"],
+            )
+        }
+
+    @app.get("/telemetry", response_model=list[TelemetryOut])
+    def get_telemetries(_=Depends(require_scope("telemetry:read"))):
+        return TELEMETRY
+
+    @app.post("/commands", response_model=CommandOut)
+    def add_command(
+        body: CommandIn, user: User = Depends(require_scope("commands:write"))
+    ):
+        COMMAND_LOG.append(
+            {
+                "id": len(COMMAND_LOG) + 1,
+                "action": body.action,
+                "issued_by": user.username,
+            }
+        )
+        return COMMAND_LOG[len(COMMAND_LOG) - 1]
+
+    @app.post("/commands/{command_id}/abort")
+    def abort_command(
+        command_id: int,
+        user: User = Depends(require_role_and_scope("director", "commands:write")),
+    ):
+        if command := next((c for c in COMMAND_LOG if c["id"] == command_id), None):
+            COMMAND_LOG.pop(command["id"] - 1)
+            return {"aborted": command_id, "by": user.username}
+        raise HTTPException(404, detail="command not found")
 
     # ── Tests ─────────────────────────────────────────────────────────────────
 
     with TestClient(app) as client:
-
         key = {"X-API-Key": "mc-key-1"}
 
         # Test 1: /health public, no key needed
@@ -259,11 +451,13 @@ def run_drill_110():
         assert "refresh_token" in tokens
         director_access = tokens["access_token"]
         director_refresh = tokens["refresh_token"]
-        print(f"  access_token present: {'access_token' in tokens}, refresh_token present: {'refresh_token' in tokens}")
+        print(
+            f"  access_token present: {'access_token' in tokens}, refresh_token present: {'refresh_token' in tokens}"
+        )
         print("  PASS")
 
         # Test 3: invalid login → 401
-        print("Test 3: invalid login → 401")
+        print("Test 3: invalid login -> 401")
         r = client.post("/token?username=director-rao&password=wrong")
         assert r.status_code == 401
         assert r.json()["detail"] == "invalid credentials"
@@ -272,17 +466,21 @@ def run_drill_110():
 
         # Test 4: other roles login
         op_tokens = client.post("/token?username=op-lee&password=pw-lee").json()
-        analyst_tokens = client.post("/token?username=analyst-fox&password=pw-fox").json()
+        analyst_tokens = client.post(
+            "/token?username=analyst-fox&password=pw-fox"
+        ).json()
         operator_access = op_tokens["access_token"]
-        analyst_access  = analyst_tokens["access_token"]
+        analyst_access = analyst_tokens["access_token"]
 
         director_auth = {**key, "Authorization": f"Bearer {director_access}"}
         operator_auth = {**key, "Authorization": f"Bearer {operator_access}"}
-        analyst_auth  = {**key, "Authorization": f"Bearer {analyst_access}"}
+        analyst_auth = {**key, "Authorization": f"Bearer {analyst_access}"}
 
         # Test 4: protected route without API key → 401
-        print("Test 4: protected route without API key → 401")
-        r = client.get("/telemetry", headers={"Authorization": f"Bearer {director_access}"})
+        print("Test 4: protected route without API key -> 401")
+        r = client.get(
+            "/telemetry", headers={"Authorization": f"Bearer {director_access}"}
+        )
         assert r.status_code == 401
         assert r.json()["detail"] == "not authenticated"
         print(f"  status: {r.status_code}, detail: {r.json()['detail']}")
@@ -295,11 +493,13 @@ def run_drill_110():
         data = r.json()
         assert len(data) == 2
         assert all("internal_sensor_id" not in t for t in data)
-        print(f"  telemetry: {len(data)}, internal_sensor_id stripped: {all('internal_sensor_id' not in t for t in data)}")
+        print(
+            f"  telemetry: {len(data)}, internal_sensor_id stripped: {all('internal_sensor_id' not in t for t in data)}"
+        )
         print("  PASS")
 
         # Test 6: analyst blocked from issuing commands (no commands:write scope)
-        print("Test 6: analyst blocked from issuing commands → 403")
+        print("Test 6: analyst blocked from issuing commands -> 403")
         r = client.post("/commands", json={"action": "ping"}, headers=analyst_auth)
         assert r.status_code == 403
         assert r.json()["detail"] == "insufficient scope"
@@ -308,17 +508,21 @@ def run_drill_110():
 
         # Test 7: operator issues a command (has commands:write scope)
         print("Test 7: operator issues a command")
-        r = client.post("/commands", json={"action": "adjust-attitude"}, headers=operator_auth)
+        r = client.post(
+            "/commands", json={"action": "adjust-attitude"}, headers=operator_auth
+        )
         assert r.status_code == 200
         cmd = r.json()
         assert cmd["id"] == 1
         assert cmd["action"] == "adjust-attitude"
         assert cmd["issued_by"] == "op-lee"
-        print(f"  id: {cmd['id']}, action: {cmd['action']}, issued_by: {cmd['issued_by']}")
+        print(
+            f"  id: {cmd['id']}, action: {cmd['action']}, issued_by: {cmd['issued_by']}"
+        )
         print("  PASS")
 
         # Test 8: operator cannot abort (wrong role, needs director)
-        print("Test 8: operator blocked from abort (role check) → 403")
+        print("Test 8: operator blocked from abort (role check) -> 403")
         r = client.post("/commands/1/abort", headers=operator_auth)
         assert r.status_code == 403
         assert r.json()["detail"] == "forbidden"
@@ -336,7 +540,7 @@ def run_drill_110():
         print("  PASS")
 
         # Test 10: aborting unknown command → 404
-        print("Test 10: abort unknown command_id → 404")
+        print("Test 10: abort unknown command_id -> 404")
         r = client.post("/commands/999/abort", headers=director_auth)
         assert r.status_code == 404
         assert r.json()["detail"] == "command not found"
@@ -344,8 +548,10 @@ def run_drill_110():
         print("  PASS")
 
         # Test 11: refresh token rejected on protected route → 401
-        print("Test 11: refresh token rejected on /telemetry → 401")
-        r = client.get("/telemetry", headers={**key, "Authorization": f"Bearer {director_refresh}"})
+        print("Test 11: refresh token rejected on /telemetry -> 401")
+        r = client.get(
+            "/telemetry", headers={**key, "Authorization": f"Bearer {director_refresh}"}
+        )
         assert r.status_code == 401
         assert r.json()["detail"] == "invalid token"
         print(f"  status: {r.status_code}, detail: {r.json()['detail']}")
@@ -353,19 +559,28 @@ def run_drill_110():
 
         # Test 12: refresh flow issues new access token with correct role/scopes
         print("Test 12: refresh issues new access token")
-        r = client.post("/refresh", headers={**key, "Authorization": f"Bearer {director_refresh}"})
+        r = client.post(
+            "/refresh", headers={**key, "Authorization": f"Bearer {director_refresh}"}
+        )
         assert r.status_code == 200
         new_access = r.json()["access_token"]
         # new token should retain director permissions
-        r2 = client.post("/commands/2/abort", headers={**key, "Authorization": f"Bearer {new_access}"})
+        r2 = client.post(
+            "/commands/2/abort",
+            headers={**key, "Authorization": f"Bearer {new_access}"},
+        )
         # command 2 doesn't exist, but should pass role+scope check and hit 404
         assert r2.status_code == 404
-        print(f"  refresh status: {r.status_code}, new-token abort check: {r2.status_code}")
+        print(
+            f"  refresh status: {r.status_code}, new-token abort check: {r2.status_code}"
+        )
         print("  PASS")
 
         # Test 13: access token rejected on /refresh → 401
-        print("Test 13: access token rejected on /refresh → 401")
-        r = client.post("/refresh", headers={**key, "Authorization": f"Bearer {director_access}"})
+        print("Test 13: access token rejected on /refresh -> 401")
+        r = client.post(
+            "/refresh", headers={**key, "Authorization": f"Bearer {director_access}"}
+        )
         assert r.status_code == 401
         assert r.json()["detail"] == "invalid token"
         print(f"  status: {r.status_code}, detail: {r.json()['detail']}")
