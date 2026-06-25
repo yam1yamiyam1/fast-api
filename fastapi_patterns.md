@@ -194,3 +194,193 @@ def list_items(p: Paginator = Depends()):
 Pass the class itself to Depends() — FastAPI instantiates it per request.
 
 ---
+
+## OAuth2PasswordBearer (D101)
+
+**What it does:** extracts a bearer token from the Authorization header.
+
+```python
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
+
+def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
+    ...
+```
+
+Raises 401 automatically if the header is missing. `tokenUrl` is only used for OpenAPI docs.
+
+---
+
+## JWT Decode (D102)
+
+**What it does:** verifies signature and expiry on a self-contained token, no server-side lookup table needed.
+
+```python
+from jose import jwt, JWTError
+
+try:
+    payload = jwt.decode(token, SECRET, algorithms=["HS256"])
+except JWTError:
+    raise HTTPException(401, detail="invalid token")
+```
+
+Add `"exp"` to claims (a UTC datetime) on encode — jose checks it automatically on decode.
+
+---
+
+## Current User Dependency (D103)
+
+**What it does:** resolves a typed User model from the JWT instead of a raw dict.
+
+```python
+class User(BaseModel):
+    username: str
+    role: str
+
+def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
+    payload = jwt.decode(token, SECRET, algorithms=["HS256"])
+    return User(username=payload["sub"], role=payload["role"])
+```
+
+Downstream deps chain off this by declaring `user: User = Depends(get_current_user)`.
+
+---
+
+## Role-Based Access Control (D104)
+
+**What it does:** gates endpoints by role using a reusable checker factory.
+
+```python
+def require_role(required_role: str):
+    def checker(user: User = Depends(get_current_user)) -> User:
+        if user.role != required_role:
+            raise HTTPException(403, detail="forbidden")
+        return user
+    return checker
+
+@app.delete("/items/{id}")
+def delete_item(user: User = Depends(require_role("admin"))): ...
+```
+
+Each call to `require_role()` returns a fresh dependency function.
+
+---
+
+## Refresh Token Pattern (D105)
+
+**What it does:** splits tokens into short-lived access + long-lived refresh, distinguished by a `"type"` claim.
+
+```python
+def make_access_token(username: str, secret: str) -> str:
+    exp = datetime.now(timezone.utc) + timedelta(minutes=15)
+    return jwt.encode({"sub": username, "type": "access", "exp": exp}, secret, algorithm="HS256")
+
+def get_refresh_user(token: str = Depends(oauth2_scheme)) -> User:
+    payload = jwt.decode(token, SECRET, algorithms=["HS256"])
+    if payload.get("type") != "refresh":
+        raise HTTPException(401, detail="invalid token")
+    return User(username=payload["sub"])
+```
+
+The client — not the server — decides when to call `/refresh`; the server never auto-refreshes.
+
+---
+
+## API Key Auth — Header + Query (D106)
+
+**What it does:** authenticates machine clients via a static key, accepted from either a header or a query param.
+
+```python
+api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+api_key_query  = APIKeyQuery(name="api_key", auto_error=False)
+
+def get_api_key(
+    header_key: str | None = Depends(api_key_header),
+    query_key:  str | None = Depends(api_key_query),
+) -> str:
+    key = header_key or query_key
+    if key not in VALID_KEYS:
+        raise HTTPException(403, detail="invalid api key")
+    return key
+```
+
+Set `auto_error=False` on both so neither raises before your combined check runs.
+
+---
+
+## HTTPBasic Auth (D107)
+
+**What it does:** extracts username+password from the Authorization: Basic header.
+
+```python
+security = HTTPBasic()
+
+def get_current_user(credentials: HTTPBasicCredentials = Depends(security)) -> str:
+    stored = USERS.get(credentials.username, "")
+    if not secrets.compare_digest(credentials.password, stored):
+        raise HTTPException(401, detail="invalid credentials")
+    return credentials.username
+```
+
+Always use `secrets.compare_digest` instead of `==` for password comparison — timing-safe.
+
+---
+
+## Scopes — Fine-Grained Permissions (D108)
+
+**What it does:** gates endpoints by individual permission strings instead of coarse roles.
+
+```python
+class User(BaseModel):
+    username: str
+    scopes: list[str]
+
+def require_scope(scope: str):
+    def checker(user: User = Depends(get_current_user)) -> User:
+        if scope not in user.scopes:
+            raise HTTPException(403, detail="insufficient scope")
+        return user
+    return checker
+```
+
+A user can hold any combination of scopes — finer-grained than a single role string.
+
+---
+
+## Auth Middleware — Global vs Per-Route (D109)
+
+**What it does:** enforces auth on every request before any route runs, with exceptions for public paths.
+
+```python
+PUBLIC_PATHS = {"/health", "/token"}
+
+@app.middleware("http")
+async def auth_middleware(request: Request, call_next):
+    if request.url.path in PUBLIC_PATHS:
+        return await call_next(request)
+    if request.headers.get("X-API-Key", "") not in VALID_KEYS:
+        return JSONResponse({"detail": "not authenticated"}, status_code=401)
+    return await call_next(request)
+```
+
+Use `JSONResponse` to short-circuit from middleware — `HTTPException` raised here isn't caught by FastAPI's handlers, since middleware runs outside that layer.
+
+---
+
+## Combining Role + Scope (D110)
+
+**What it does:** stacks both checks in a single dependency for endpoints that need a specific job function AND a specific permission.
+
+```python
+def require_role_and_scope(role: str, scope: str):
+    def checker(user: User = Depends(get_current_user)) -> User:
+        if user.role != role:
+            raise HTTPException(403, detail="forbidden")
+        if scope not in user.scopes:
+            raise HTTPException(403, detail="insufficient scope")
+        return user
+    return checker
+```
+
+Check role before scope so the 403 detail reflects the first failing condition, matching client expectations about which check ran first.
+
+---
